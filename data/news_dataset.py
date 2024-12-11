@@ -2,12 +2,11 @@ import os
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from DS300.utils import get_news
-
+from utils import get_articles
 
 class NewsDataset(Dataset):
     def __init__(self, news, users):
-        self.news = get_news(news, users)
+        self.news = get_articles(news, users)
         # self.users = get_users(news, users)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
 
