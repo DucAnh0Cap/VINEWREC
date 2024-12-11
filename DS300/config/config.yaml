@@ -1,0 +1,23 @@
+DATA:
+    batch_size: 16
+    seq_len: 23
+    trigram_dim: 50
+    num_classes: 5
+    num_users: 11954
+    num_items: 508
+    vocab_size: 36096
+NCF:
+    latent_dim_gmf: 128
+    latent_dim_mlp: 128
+    layers:
+    - 256
+    - 128
+    - 64
+    - 32
+    - 16
+    weight_init_gaussian: True
+    text_based_score: False
+TEXT_BASED:
+    weight_init_gaussian: True
+    embedding_dim: 128
+    hidden_dim: 128
