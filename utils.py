@@ -1,4 +1,30 @@
 from tqdm import tqdm
+from torchmetrics import Accuracy, Recall, Precision
+from torchmetrics.classification import MulticlassF1Score
+
+
+def compute_multiclass_metrics(gens, gts, num_classes=8):
+    accuracy_fn = Accuracy(task="multiclass",
+                           num_clases=num_classes)
+    recall_fn = Recall(task="multiclass",
+                       average='micro',
+                       num_classes=num_classes)
+    precision_fn = Precision(task="multiclass",
+                             average='micro',
+                             num_classes=num_classes)
+    f1_fn = MulticlassF1Score(num_classes=num_classes,
+                              average=None)
+    accuracy = accuracy_fn(gens, gts)
+    recall = recall_fn(gens, gts)
+    precision = precision_fn(gens, gts)
+    f1 = f1_fn(gens, gts)
+    
+    return {
+        'accuracy': accuracy,
+        'recall': recall,
+        'precision': precision,
+        'f1': f1,
+    }
 
 
 def get_articles(articles, users):

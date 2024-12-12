@@ -1,22 +1,31 @@
+TRAINING:
+    LEARNING_RATE: 1.
+    LAMBDA_LR:
+    EPOCH: 200
+    DEVICE:
+    SCORE: f1
+    WARMUP: 10000
+    PATIENCE: 5
+    CHECKPOINT_PATH: saved_models
 DATA:
-    batch_size: 16
-    trigram_dim: 50
-    num_classes: 8
-    num_users: 11954
-    num_items: 508
-    vocab_size: 36096
+    BATCH_SIZE: 16
+    TRIGRAM_DIM: 50
+    NUM_CLASSES: 8
+    NUM_USERS: 11954
+    NUM_ITEMS: 508
+    VOCAB_SIZE: 36096
 NCF:
-    latent_dim_gmf: 128
-    latent_dim_mlp: 128
-    layers:
+    LATENT_DIM_GMF: 128
+    LATENT_DIM_MLP: 128
+    LAYERS:
     - 256
     - 128
     - 64
     - 32
     - 16
-    weight_init_gaussian: True
-    text_based_score: False
+    WEIGHT_INIT_GAUSSIAN: True
+    TEXT_BASED_SCORE: False
 TEXT_BASED:
-    weight_init_gaussian: True
-    embedding_dim: 128
-    hidden_dim: 128
+    WEIGHT_INIT_GAUSSIAN: True
+    EMBEDDING_DIM: 128
+    HIDDEN_DIM: 128

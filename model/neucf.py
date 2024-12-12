@@ -8,26 +8,26 @@ class NeuCF(nn.Module):
     def __init__(self, config):
         super(NeuCF, self).__init__()
 
-        self.latent_dim_mlp = config['NCF']['latent_dim_mlp']
-        self.latent_dim_gmf = config['NCF']['latent_dim_gmf']
-        self.layers = config['NCF']['layers']
-        self.weight_init_gaussian = config['NCF']['weight_init_gaussian']
-        self.text_based_score = config['NCF']['text_based_score']
+        self.latent_dim_mlp = config['NCF']['LATENT_DIM_MLP']
+        self.latent_dim_gmf = config['NCF']['LATENT_DIM_GMF']
+        self.layers = config['NCF']['LAYERS']
+        self.weight_init_gaussian = config['NCF']['WEIGHT_INIT_GAUSSIAN']
+        self.text_based_score = config['NCF']['TEXT_BASED_SCORE']
 
         # Use text-based score
         if self.text_based_score:
             self.text_based_clf = TrigramTextScoreModel(config)
             for param in self.text_based_clf.parameters():
                 param.requires_grad = False
-            self.tb_fc_1 = nn.Linear(config['DATA']['num_classes'], self.latent_dim_mlp)
+            self.tb_fc_1 = nn.Linear(config['DATA']['NUM_CLASSES'], self.latent_dim_mlp)
             self.tb_fc_2 = nn.Linear(self.layers[0], self.layers[1])
 
 
         # Embed item and user features
-        self.embed_user_mlp = nn.Embedding(num_embeddings=config['DATA']['vocab_size'], embedding_dim=self.latent_dim_mlp)
-        self.embed_item_mlp = nn.Embedding(num_embeddings=config['DATA']['vocab_size'], embedding_dim=self.latent_dim_mlp)
-        self.embed_user_gmf = nn.Embedding(num_embeddings=config['DATA']['vocab_size'], embedding_dim=self.latent_dim_gmf)
-        self.embed_item_gmf = nn.Embedding(num_embeddings=config['DATA']['vocab_size'], embedding_dim=self.latent_dim_gmf)
+        self.embed_user_mlp = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_mlp)
+        self.embed_item_mlp = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_mlp)
+        self.embed_user_gmf = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_gmf)
+        self.embed_item_gmf = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_gmf)
 
         # Create mlp layers
         self.fc_layers = torch.nn.ModuleList()

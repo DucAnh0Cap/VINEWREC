@@ -6,14 +6,12 @@ import torch.nn.functional as F
 class TrigramTextScoreModel(nn.Module):
     def __init__(self, config):
         super(TrigramTextScoreModel, self).__init__()
-        self.batch_size = config['DATA']['batch_size']
-        self.seq_len = config['DATA']['seq_len']
 
-        self.trigram_embedding = nn.Embedding(config['DATA']['vocab_size'], config['TEXT_BASED']['embedding_dim'])
-        self.subreddit_embedding = nn.Embedding(config['DATA']['vocab_size'], config['TEXT_BASED']['embedding_dim'])
+        self.trigram_embedding = nn.Embedding(config['DATA']['VOCAB_SIZE'], config['TEXT_BASED']['EMBEDDING_DIM'])
+        self.subreddit_embedding = nn.Embedding(config['DATA']['VOCAB_SIZE'], config['TEXT_BASED']['EMBEDDING_DIM'])
 
-        self.fc1 = nn.Linear(config['DATA']['trigram_dim'] * config['TEXT_BASED']['embedding_dim'], config['DATA']['trigram_dim'])
-        self.fc2 = nn.Linear(config['DATA']['trigram_dim'] + config['TEXT_BASED']['hidden_dim'], config['TEXT_BASED']['hidden_dim'])
+        self.fc1 = nn.Linear(config['DATA']['trigram_dim'] * config['TEXT_BASED']['EMBEDDING_DIM'], config['DATA']['TRIGRAM_DIM'])
+        self.fc2 = nn.Linear(config['DATA']['trigram_dim'] + config['TEXT_BASED']['HIDDEN_DIM'], config['TEXT_BASED']['HIDDEN_DIM'])
 
         self.fc3 = nn.Linear(config['TEXT_BASED']['hidden_dim'], config['DATA']['num_classes'])
 
@@ -23,8 +21,9 @@ class TrigramTextScoreModel(nn.Module):
         trigram_embeds = self.trigram_embedding(items['trigram_ids']) # Shape: (batch_size, seq_len, embedding_dim)
         interacted_rate_embeds = self.subreddit_embedding(items['interacted_rate'])  # Shape: (batch_size, seq_len, embedding_dim)
         interacted_rate_features = interacted_rate_embeds.mean(dim=1)  # Aggregate features, Shape: (batch_size, embedding_dim)
-        # print(trigram_embeds.shape)
-        trigrams_features = trigram_embeds.view([self.batch_size, self.seq_len, -1]).mean(dim=1) # Aggregate features, Shape: (batch_size, trigram_dim * embedding_dim )
+        
+        batch_size, seq_len, _, _ = trigram_embeds.shape
+        trigrams_features = trigram_embeds.view([batch_size, seq_len, -1]).mean(dim=1) # Aggregate features, Shape: (batch_size, trigram_dim * embedding_dim )
         # print(trigrams_features.shape)
         # Fully connected layers
         trigrams_features = F.relu(self.fc1(trigrams_features))
