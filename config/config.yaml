@@ -1,8 +1,7 @@
 DATA:
     batch_size: 16
-    seq_len: 23
     trigram_dim: 50
-    num_classes: 5
+    num_classes: 8
     num_users: 11954
     num_items: 508
     vocab_size: 36096

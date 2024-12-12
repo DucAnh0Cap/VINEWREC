@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from text_based import text_based_clf
+from model.text_score import text_based_clf
 
 
 class NeuCF(nn.Module):

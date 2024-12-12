@@ -18,11 +18,11 @@ class TrigramTextScoreModel(nn.Module):
         self.fc3 = nn.Linear(config['TEXT_BASED']['hidden_dim'], config['DATA']['num_classes'])
 
 
-    def forward(self, subreddit_ids, trigram_ids):
-        # Subreddit embeddings
-        trigram_embeds = self.trigram_embedding(trigram_ids) # Shape: (batch_size, seq_len, embedding_dim)
-        subreddit_embeds = self.subreddit_embedding(subreddit_ids)  # Shape: (batch_size, seq_len, embedding_dim)
-        subreddit_features = subreddit_embeds.mean(dim=1)  # Aggregate features, Shape: (batch_size, embedding_dim)
+    def forward(self, items):
+        # trigram and interacted_rate embeddings
+        trigram_embeds = self.trigram_embedding(items['trigram_ids']) # Shape: (batch_size, seq_len, embedding_dim)
+        interacted_rate_embeds = self.subreddit_embedding(items['interacted_rate'])  # Shape: (batch_size, seq_len, embedding_dim)
+        interacted_rate_features = interacted_rate_embeds.mean(dim=1)  # Aggregate features, Shape: (batch_size, embedding_dim)
         # print(trigram_embeds.shape)
         trigrams_features = trigram_embeds.view([self.batch_size, self.seq_len, -1]).mean(dim=1) # Aggregate features, Shape: (batch_size, trigram_dim * embedding_dim )
         # print(trigrams_features.shape)
@@ -30,7 +30,7 @@ class TrigramTextScoreModel(nn.Module):
         trigrams_features = F.relu(self.fc1(trigrams_features))
 
         # Concatenate subreddit features with trigram vectors
-        combined_features = torch.cat([subreddit_features, trigrams_features], dim=-1)  # Shape: (batch_size, trigram_dim + hidden_dim)
+        combined_features = torch.cat([interacted_rate_features, trigrams_features], dim=-1)  # Shape: (batch_size, trigram_dim + hidden_dim)
         # print(combined_features.shape)
         hidden = F.relu(self.fc2(combined_features))
         output = self.fc3(hidden)  # Shape: (batch_size, num_classes)
