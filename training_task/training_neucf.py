@@ -1,13 +1,16 @@
 import torch
+from torch import nn, optim
+import torch.nn.functional as F
 from tqdm import tqdm
+import os
 from utils import compute_multiclass_metrics
 from base_task import BaseTask
 
-class TrainingTextScore(BaseTask):
+class TrainingNeuCF(BaseTask):
     def __init__(self, config, model, train_dataloader, dev_dataloader):
         super().__init__(config, model, train_dataloader, dev_dataloader)
+        self.loss_fn = nn.L1Loss()
         
-
     def train(self):
         self.model.to(self.device)
         self.model.train()
@@ -18,7 +21,7 @@ class TrainingTextScore(BaseTask):
                 items = items.to(self.device)
                 out = self.model(items)  # interacted_rate, trigram_ids
                 self.optimizer.zero_grad()
-                loss = self.loss_fn(out, items['interacted_categories'])
+                loss = self.loss_fn(out, items['NLI_scores'])
                 loss.backward()
 
                 self.optimizer.step()
@@ -28,7 +31,7 @@ class TrainingTextScore(BaseTask):
                 pbar.set_postfix(loss=running_loss / (it + 1))
                 pbar.update()
                 self.scheduler.step()
-
+    
     def evaluation(self):
         gts = []
         gens = []
@@ -40,6 +43,6 @@ class TrainingTextScore(BaseTask):
                     outs = self.model(items)
                 gts.extend(list(items['interacted_categories'].numpy()))
                 gens.extend(list(outs.numpy()))
-        scores = compute_multiclass_metrics(gens, gts)
+        scores = None
         
         return scores

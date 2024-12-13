@@ -1,9 +1,8 @@
 TRAINING:
     LEARNING_RATE: 1.
-    LAMBDA_LR:
     EPOCH: 200
-    DEVICE:
-    SCORE: f1
+    DEVICE: cuda
+    SCORE: F1
     WARMUP: 10000
     PATIENCE: 5
     CHECKPOINT_PATH: saved_models

@@ -20,10 +20,10 @@ def compute_multiclass_metrics(gens, gts, num_classes=8):
     f1 = f1_fn(gens, gts)
     
     return {
-        'accuracy': accuracy,
-        'recall': recall,
-        'precision': precision,
-        'f1': f1,
+        'ACCURACY': accuracy,
+        'RECALL': recall,
+        'PRECISION': precision,
+        'F1': f1,
     }
 
 
