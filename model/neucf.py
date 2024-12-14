@@ -41,7 +41,7 @@ class NeuCF(nn.Module):
         self.logic = nn.Sigmoid()
 
         # Init weight
-        if config['NCF']['weight_init_gaussian']:
+        if config['NCF']['WEIGHT_INIT_GAUSSIAN']:
             self.init_weight()
 
 
@@ -51,11 +51,11 @@ class NeuCF(nn.Module):
                 torch.nn.init.normal_(sm.weight.data, 0.0, 0.01)
 
 
-    def forward(self, user, item, trigram_ids=None, news_ids=None):
-        user_embedding_mlp = self.embed_user_mlp(user).mean(dim=1) # Shape: (batch_size, seq_len, embedding_dim)
-        item_embedding_mlp = self.embed_item_mlp(item).mean(dim=1)
-        user_embedding_gmf = self.embed_user_gmf(user).mean(dim=1)
-        item_embedding_gmf = self.embed_item_gmf(item).mean(dim=1)
+    def forward(self, item):
+        user_embedding_mlp = self.embed_user_mlp(item['comments']).mean(dim=1) # Shape: (batch_size, seq_len, embedding_dim)
+        item_embedding_mlp = self.embed_item_mlp(item['descriptions']).mean(dim=1)
+        user_embedding_gmf = self.embed_user_gmf(item['comments']).mean(dim=1)
+        item_embedding_gmf = self.embed_item_gmf(item['descriptions']).mean(dim=1)
 
         # Add text_based score
         if self.text_based_score:
@@ -77,7 +77,6 @@ class NeuCF(nn.Module):
             mlp_vector = nn.ReLU()(mlp_vector)
 
         vector = torch.cat([mlp_vector, gmf_vector], dim=-1)
-        print(vector.shape)
         logits = self.affine_output(vector.flatten(1))
         ratings = self.logic(logits)
 

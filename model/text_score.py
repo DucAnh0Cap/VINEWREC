@@ -10,10 +10,10 @@ class TrigramTextScoreModel(nn.Module):
         self.trigram_embedding = nn.Embedding(config['DATA']['VOCAB_SIZE'], config['TEXT_BASED']['EMBEDDING_DIM'])
         self.subreddit_embedding = nn.Embedding(config['DATA']['VOCAB_SIZE'], config['TEXT_BASED']['EMBEDDING_DIM'])
 
-        self.fc1 = nn.Linear(config['DATA']['trigram_dim'] * config['TEXT_BASED']['EMBEDDING_DIM'], config['DATA']['TRIGRAM_DIM'])
-        self.fc2 = nn.Linear(config['DATA']['trigram_dim'] + config['TEXT_BASED']['HIDDEN_DIM'], config['TEXT_BASED']['HIDDEN_DIM'])
+        self.fc1 = nn.Linear(config['DATA']['TRIGRAM_DIM'] * config['TEXT_BASED']['EMBEDDING_DIM'], config['DATA']['TRIGRAM_DIM'])
+        self.fc2 = nn.Linear(config['DATA']['TRIGRAM_DIM'] + config['TEXT_BASED']['HIDDEN_DIM'], config['TEXT_BASED']['HIDDEN_DIM'])
 
-        self.fc3 = nn.Linear(config['TEXT_BASED']['hidden_dim'], config['DATA']['num_classes'])
+        self.fc3 = nn.Linear(config['TEXT_BASED']['HIDDEN_DIM'], config['DATA']['NUM_CLASSES'])
 
 
     def forward(self, items):

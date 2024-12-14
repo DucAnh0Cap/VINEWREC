@@ -3,10 +3,10 @@ from tqdm import tqdm
 from utils import compute_multiclass_metrics
 from base_task import BaseTask
 
+
 class TrainingTextScore(BaseTask):
     def __init__(self, config, model, train_dataloader, dev_dataloader):
         super().__init__(config, model, train_dataloader, dev_dataloader)
-        
 
     def train(self):
         self.model.to(self.device)

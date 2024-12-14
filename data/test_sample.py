@@ -5,24 +5,27 @@ import torch
 
 
 class TestSamples(Dataset):
+    '''
+    This class is used for generating test sample for evaluation
+    '''
     def __init__(self, news, users):
         self.users = get_users(news, users)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
-
+        self.num_items = 50
         self.samples = []
         for user in self.users:
             if 'article_ids' not in user:
                 user['article_ids'] = []  
-            
-            remain_ids = 50 - len(user['article_ids'])
+
+            remain_ids = self.num_items - len(user['article_ids'])
             comments = ['. '.join(user['comments']) for i in range(50)]
-            
+
             # Filter news articles not in user's history and sample
             df = news[~news.article_id.isin(user['article_ids'])].sample(remain_ids)
-            
+
             # Combine user's article ids with sampled ids
             article_ids = user['article_ids']
-            
+
             # Generate labels
             labels = torch.zeros(50)
             labels[:len(user['article_ids'])] = 1

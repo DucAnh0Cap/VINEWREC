@@ -10,6 +10,7 @@ class userDataset(Dataset):
     def __init__(self, news, users):
         self.users = get_users(news, users)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
+
     def __len__(self):
         return len(self.users)
     
@@ -37,7 +38,7 @@ class userDataset(Dataset):
 
         batch_dict['trigram_ids'] = []
         for tri_ in trigrams:
-            tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=50, truncation=True, return_tensors='pt').input_ids
+            tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=100, truncation=True, return_tensors='pt').input_ids
             batch_dict['trigram_ids'].append(tokenize_trigrams)
         batch_dict['trigram_ids'] = torch.stack(batch_dict['trigram_ids'])
         batch_dict['interacted_categories'] = torch.stack(batch_dict['interacted_categories'])
