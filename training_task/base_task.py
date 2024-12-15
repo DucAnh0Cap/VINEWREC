@@ -36,6 +36,8 @@ class BaseTask:
         raise NotImplementedError
         
     def save_checkpoint(self, dict_for_updating):
+        if not os.isdir(self.checkpoint_path):
+            os.mkdir(self.checkpoint_path)
         dict_for_saving = {
             'epoch': self.epoch,
             'state_dict': self.model.state_dict(),
