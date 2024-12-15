@@ -29,12 +29,14 @@ def compute_multiclass_metrics(gens, gts, num_classes=8):
 
 
 def get_articles(df):
-    article_ids = df.article_id.to_list()
+    article_ids = list(df.article_id.unique())
     article_lst = []
+    df = df.drop(['author_url', 'author_description', 'content', 'No_Title', 'avata_coment_href','time_com', 
+                  'label', 'nli_score', 'nickname', 'user_reacted'], axis=1)
     for _, id in tqdm(enumerate(article_ids)):
         article_dict = {}
         article_dict = df.loc[df['article_id'] == id].iloc[0].to_dict()  # Create a copy of news_template
-        article_dict['reader'] = df.loc[df['article_id'] == id].usr_id.to_list()
+        article_dict['usr_ids'] = df.loc[df['article_id'] == id].usr_id.to_list()
         article_dict['comments'] = df.loc[df['article_id'] == id].user_comment.to_list()
         article_lst.append(article_dict)
     return article_lst
@@ -90,5 +92,7 @@ def get_users(df):
         user_dict['categories'] = list(categories)
         user_dict['interacted_rate'] = list(temp_dict.values())
 
+        
+        
         user_lst.append(user_dict)
     return user_lst

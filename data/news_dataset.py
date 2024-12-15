@@ -1,11 +1,12 @@
 import os
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from torch.utils.data import Dataset
+from transformers import AutoTokenizer
 from utils import get_articles, get_users
 from torch.nn.utils.rnn import pad_sequence
 from nltk import ngrams
 import torch
+
 
 class NewsDataset(Dataset):
     def __init__(self, df: pd.DataFrame):
