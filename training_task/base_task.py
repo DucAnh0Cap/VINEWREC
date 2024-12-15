@@ -13,20 +13,20 @@ class BaseTask:
         self.model = model
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(params=self.model.parameters(),
-                                    lr=config.TRAINING.LEARNING_RATE,
+                                    lr=config['TRAINING']['LEARNING_RATE'],
                                     betas=(0.9, 0.98))
-        self.scheduler = LambdaLR(self.optimizer, self.lambda_lr)
         
-        self.epoch = config.TRAINING.EPOCH
+        self.epoch = config['TRAINING']['EPOCH']
         self.running_epoch = 0
         self.train_dataloader = train_dataloader
         self.dev_dataloader = dev_dataloader
         
-        self.patience = config.TRAINING.PATIENCE
-        self.device = config.TRAINING.DEVICE
-        self.score = config.TRAINING.SCORE
-        self.warmup = config.TRAINING.WARMUP
-        self.checkpoint_path = config.TRAINING.CHECKPOINT_PATH
+        self.patience = config['TRAINING']['PATIENCE']
+        self.device = config['TRAINING']['DEVICE']
+        self.score = config['TRAINING']['SCORE']
+        self.warmup = config['TRAINING']['WARMUP']
+        self.scheduler = LambdaLR(self.optimizer, self.lambda_lr)
+        self.checkpoint_path = config['TRAINING']['CHECKPOINT_PATH']
         
 
     def train(self):

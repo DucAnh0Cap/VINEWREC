@@ -43,7 +43,6 @@ class NewsDataset(Dataset):
             "usr_ids": [item["usr_ids"] for item in batch],
             "usr_categories": [item["category"] for item in batch],
             "usr_comments": [item["comment"] for item in batch],
-            'nli_scores': [item['nli_score'] for item in batch]
         }
 
         usr_hist_lst = []
@@ -56,7 +55,7 @@ class NewsDataset(Dataset):
         batch_dict['usr_interacted_categories'] = []
         batch_dict['usr_interacted_rates'] = []
         batch_dict['usr_tags'] = []
-
+        batch_dict['nli_scores'] = []
         # Get users with coresponding Ids
         df = self.data.loc[self.data.usr_id.isin(batch_dict['usr_ids'])]
         users = get_users(df)
@@ -69,6 +68,10 @@ class NewsDataset(Dataset):
             user_interacted_rates[usr['usr_id']] = (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
                                                     torch.tensor(usr['interacted_categories'], dtype=torch.int64))
             user_tags[usr['usr_id']] = ' '.join(usr['tags'])
+            # batch_dict['nli_scores'].append(usr['nli_scores'])
+        
+        for i in range(len(batch_dict['article_ids'])):
+            batch_dict['nli_scores'].append(df.loc[(df.article_id==batch_dict['article_ids'][i]) & (df.usr_id==batch_dict['usr_ids'][i])].nli_score.iloc[0])
 
         # Retrieve the rate from the dictionary
         for id in batch_dict['usr_ids']:
@@ -78,7 +81,7 @@ class NewsDataset(Dataset):
                 batch_dict['usr_interacted_rates'].append(rate)
                 batch_dict['usr_interacted_categories'].append(categories)
                 batch_dict['usr_tags'].append(usr_tag)
-
+                
         # Get trigrams
         for id in batch_dict['usr_ids']:
             comments = df.loc[df.usr_id == id]
@@ -96,10 +99,16 @@ class NewsDataset(Dataset):
         # Tokenize
         batch_dict['usr_trigram'] = []
         for tri_ in trigrams:
-            tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
-            batch_dict['usr_trigram'].append(tokenize_trigrams)
+            if tri_:  
+                tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
+                batch_dict['usr_trigram'].append(tokenize_trigrams)
+            else:
+                # If tri_ is empty, append an empty tensor with the correct shape
+                batch_dict['usr_trigram'].append(torch.empty(0, self.trigram_dim, dtype=torch.long)) 
+            
         batch_dict['usr_trigram'] = pad_sequence(batch_dict['usr_trigram'], batch_first=True, padding_value=0)
-
+        
+        batch_dict['nli_scores'] = torch.tensor(batch_dict['nli_scores'])
         batch_dict['usr_interacted_categories'] = torch.stack(batch_dict['usr_interacted_categories'])
         batch_dict['usr_interacted_rates'] = torch.stack(batch_dict['usr_interacted_rates'])
         batch_dict['descriptions'] = self.tokenizer(batch_dict['descriptions'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids

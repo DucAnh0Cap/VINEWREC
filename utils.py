@@ -33,7 +33,7 @@ def get_articles(df):
     article_lst = []
     df = df.drop(['author_url', 'author_description', 'content', 'No_Title', 'avata_coment_href','time_com', 
                   'label', 'nli_score', 'nickname', 'user_reacted'], axis=1)
-    for _, id in tqdm(enumerate(article_ids)):
+    for id in article_ids:
         article_dict = {}
         article_dict = df.loc[df['article_id'] == id].iloc[0].to_dict()  # Create a copy of news_template
         article_dict['usr_ids'] = df.loc[df['article_id'] == id].usr_id.to_list()
@@ -58,7 +58,7 @@ def get_users(df):
     # for c_ in categories:
     #     map_dict[c_] = 0
 
-    for _, id in tqdm(enumerate(user_ids)):
+    for id in user_ids:
         user_dict = dict()
         df_ = df.loc[df['usr_id'] == id]
 

@@ -1,3 +1,6 @@
 sentence-transformers 
 streamlit 
 pandas
+recsys_metrics
+tqdm
+torchmetrics

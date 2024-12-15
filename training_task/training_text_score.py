@@ -15,8 +15,10 @@ class TrainingTextScore(BaseTask):
         running_loss = 0
         with tqdm(desc='Epoch %d - Training with cross-entropy loss' % self.running_epoch, unit='it', total=len(self.train_dataloader)) as pbar:
             for it, items in enumerate(self.train_dataloader):
-                items = items.to(self.device)
-                out = self.model(items)  # interacted_rate, trigram_ids
+                for key, value in items.items():
+                    if isinstance(value, torch.Tensor):
+                        items[key] = value.to(self.device)
+                out = self.model(items).flatten()  # interacted_rate, trigram_ids
                 self.optimizer.zero_grad()
                 loss = self.loss_fn(out, items['interacted_categories'])
                 loss.backward()
@@ -35,11 +37,13 @@ class TrainingTextScore(BaseTask):
         self.model.eval()
         with tqdm(desc='Epoch %d - Evaluation' % self.epoch, unit='it', total=len(self.dev_dataloader)) as pbar:
             for it, items in enumerate(self.test_dataloader):
-                items = items.to(self.device)
+                for key, value in items.items():
+                    if isinstance(value, torch.Tensor):
+                        items[key] = value.to(self.device)
                 with torch.inference_mode():
                     outs = self.model(items)
-                gts.extend(list(items['interacted_categories'].numpy()))
-                gens.extend(list(outs.numpy()))
+                gts.extend(items['interacted_categories'].cpu())
+                gens.extend(outs.cpu())
         scores = compute_multiclass_metrics(gens, gts)
         
         return scores
