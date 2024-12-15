@@ -8,8 +8,8 @@ class TestSamples(Dataset):
     '''
     This class is used for generating test sample for evaluation
     '''
-    def __init__(self, news, users):
-        self.users = get_users(news, users)
+    def __init__(self, data):
+        self.users = get_users(data)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
         self.num_items = 50
         self.samples = []
@@ -21,7 +21,7 @@ class TestSamples(Dataset):
             comments = ['. '.join(user['comments']) for i in range(50)]
 
             # Filter news articles not in user's history and sample
-            df = news[~news.article_id.isin(user['article_ids'])].sample(remain_ids)
+            df = data[~data.article_id.isin(user['article_ids'])].sample(remain_ids)
 
             # Combine user's article ids with sampled ids
             article_ids = user['article_ids']
@@ -35,10 +35,9 @@ class TestSamples(Dataset):
             # Get article descriptions, handling potential missing descriptions
             article_desc = []
             for id in article_ids:
-                desc = news.loc[news.article_id == id, 'description']
+                desc = data.loc[data.article_id == id, 'description']
                 # Check if description exists and is not empty
                 article_desc.append(desc.iloc[0] if not desc.empty else '') 
-
 
             self.samples.append({
                 'id': user['Id'],

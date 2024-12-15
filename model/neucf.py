@@ -52,19 +52,21 @@ class NeuCF(nn.Module):
 
 
     def forward(self, item):
-        user_embedding_mlp = self.embed_user_mlp(item['comments']).mean(dim=1) # Shape: (batch_size, seq_len, embedding_dim)
+        user_embedding_mlp = self.embed_user_mlp(item['usr_comments']).mean(dim=1) # Shape: (batch_size, seq_len, embedding_dim)
         item_embedding_mlp = self.embed_item_mlp(item['descriptions']).mean(dim=1)
-        user_embedding_gmf = self.embed_user_gmf(item['comments']).mean(dim=1)
+        user_embedding_gmf = self.embed_user_gmf(item['usr_comments']).mean(dim=1)
         item_embedding_gmf = self.embed_item_gmf(item['descriptions']).mean(dim=1)
 
         # Add text_based score
         if self.text_based_score:
 
-            embed_scores = self.text_based_clf(news_ids, trigram_ids)
+            embed_scores = self.text_based_clf(item)
             text_based_feature = self.tb_fc_1(embed_scores)
 
-            user_embedding_gmf = torch.cat([user_embedding_gmf, text_based_feature], dim=-1)
-            user_embedding_mlp = torch.cat([user_embedding_mlp, text_based_feature], dim=-1)
+            user_embedding_gmf = torch.cat([user_embedding_gmf, 
+                                            text_based_feature], dim=-1)
+            user_embedding_mlp = torch.cat([user_embedding_mlp, 
+                                            text_based_feature], dim=-1)
 
             user_embedding_gmf = self.tb_fc_2(user_embedding_gmf)
             user_embedding_mlp = self.tb_fc_2(user_embedding_mlp)
