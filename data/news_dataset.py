@@ -9,12 +9,12 @@ import torch
 
 
 class NewsDataset(Dataset):
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, config, df: pd.DataFrame):
         self.data = df
         self.news = get_articles(self.data)
         # self.users = get_users(news, users)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
-
+        self.trigram_dim = config['DATA']['TRIGRAM_DIM']
         self.samples = []
         for news_ in self.news:
             for i in range(len(news_['comments'])):
@@ -43,10 +43,14 @@ class NewsDataset(Dataset):
             "usr_ids": [item["usr_ids"] for item in batch],
             "usr_categories": [item["category"] for item in batch],
             "usr_comments": [item["comment"] for item in batch],
+            'nli_scores': [item['nli_score'] for item in batch]
         }
 
         usr_hist_lst = []
         
+        # Get NLI Scores
+        batch_dict['nli_scores'] = self.data.loc[(self.data.article_id.isin(batch_dict['article_ids']) & 
+                                                  self.data.usr_id.isin(batch_dict['usr_ids']))].nli_score.to_list()
 
         # Get interacted_rate and interacted_categories
         batch_dict['usr_interacted_categories'] = []
@@ -63,7 +67,7 @@ class NewsDataset(Dataset):
 
         for usr in users:
             user_interacted_rates[usr['usr_id']] = (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
-                                                torch.tensor(usr['interacted_categories'], dtype=torch.int64))
+                                                    torch.tensor(usr['interacted_categories'], dtype=torch.int64))
             user_tags[usr['usr_id']] = ' '.join(usr['tags'])
 
         # Retrieve the rate from the dictionary
@@ -74,7 +78,6 @@ class NewsDataset(Dataset):
                 batch_dict['usr_interacted_rates'].append(rate)
                 batch_dict['usr_interacted_categories'].append(categories)
                 batch_dict['usr_tags'].append(usr_tag)
-
 
         # Get trigrams
         for id in batch_dict['usr_ids']:
@@ -89,13 +92,11 @@ class NewsDataset(Dataset):
                 for grams in sixgrams:
                     lst.append(' '.join(grams))
             trigrams.append(lst)
-
-        # Get users' tags
         
         # Tokenize
         batch_dict['usr_trigram'] = []
         for tri_ in trigrams:
-            tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=100, truncation=True, return_tensors='pt').input_ids
+            tokenize_trigrams = self.tokenizer(tri_, padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
             batch_dict['usr_trigram'].append(tokenize_trigrams)
         batch_dict['usr_trigram'] = pad_sequence(batch_dict['usr_trigram'], batch_first=True, padding_value=0)
 
@@ -103,6 +104,6 @@ class NewsDataset(Dataset):
         batch_dict['usr_interacted_rates'] = torch.stack(batch_dict['usr_interacted_rates'])
         batch_dict['descriptions'] = self.tokenizer(batch_dict['descriptions'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
         batch_dict['usr_comments'] = self.tokenizer(batch_dict['usr_comments'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
-        batch_dict['usr_tags'] = self.tokenizer(batch_dict['usr_tags'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
+        batch_dict['usr_tags'] = self.tokenizer(batch_dict['usr_tags'], padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
         return batch_dict
 

@@ -1,10 +1,8 @@
 import torch
-from torch import nn, optim
-import torch.nn.functional as F
+from torch import nn
 from tqdm import tqdm
-import os
-from utils import compute_multiclass_metrics
 from base_task import BaseTask
+from recsys_metrics import rank_report
 
 class TrainingNeuCF(BaseTask):
     def __init__(self, config, model, train_dataloader, dev_dataloader):
@@ -21,7 +19,7 @@ class TrainingNeuCF(BaseTask):
                 items = items.to(self.device)
                 out = self.model(items)  # interacted_rate, trigram_ids
                 self.optimizer.zero_grad()
-                loss = self.loss_fn(out, items['NLI_scores'])
+                loss = self.loss_fn(out, items['nli_scores'])
                 loss.backward()
 
                 self.optimizer.step()
@@ -41,8 +39,15 @@ class TrainingNeuCF(BaseTask):
                 items = items.to(self.device)
                 with torch.inference_mode():
                     outs = self.model(items)
-                gts.extend(list(items['interacted_categories'].numpy()))
-                gens.extend(list(outs.numpy()))
-        scores = None
+                gts.append(items['labels'])
+                gens.append(outs.flatten())
+        gts = torch.stack(gts)
+        gens = torch.stack(gens)
+        scores = rank_report(preds=gens, 
+                             target=gts, 
+                             k=10, 
+                             to_item=True, 
+                             name_abbreviation=True,
+                             rounding=4)
         
         return scores

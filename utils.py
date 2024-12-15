@@ -43,7 +43,7 @@ def get_articles(df):
 
 
 def get_users(df):
-    user_ids = df.usr_id.to_list()
+    user_ids = list(df.usr_id.unique())
     user_lst = []
 
     categories = df.category.unique()
@@ -62,7 +62,7 @@ def get_users(df):
         user_dict = dict()
         df_ = df.loc[df['usr_id'] == id]
 
-        user_dict = df_.iloc[0].drop(['Title', 'article_id', 'user_comment', 'time_com', 'avata_coment_href', 'content', 'label', 'nli_score', 'tags',
+        user_dict = df_.iloc[0].drop(['Title', 'article_id', 'user_comment', 'time_com', 'avata_coment_href', 'content', 'label', 'nli_score', 'tags', 'description',
                                       'publish_date', 'No_Title', 'category', 'url', 'author_description', 'author_name', 'author_url']).to_dict()
         user_dict['comments'] = df_.user_comment.to_list()
         user_dict['articles_id'] = df_.article_id.to_list()
@@ -89,10 +89,9 @@ def get_users(df):
         for a_id in user_dict['articles_id']:
             cat_ = df.loc[df.article_id == a_id].category.iloc[0]
             temp_dict[cat_] += 1
+
         user_dict['categories'] = list(categories)
         user_dict['interacted_rate'] = list(temp_dict.values())
 
-        
-        
         user_lst.append(user_dict)
     return user_lst

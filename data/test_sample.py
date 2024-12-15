@@ -2,55 +2,76 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from utils import get_users
 import torch
-
+from tqdm.auto import tqdm
+from nltk import ngrams
 
 class TestSamples(Dataset):
     '''
     This class is used for generating test sample for evaluation
     '''
-    def __init__(self, data):
+    def __init__(self, config, data, full_data):
+        self.data = data
         self.users = get_users(data)
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
         self.num_items = 50
+        self.trigram_dim = config['DATA']['TRIGRAM_DIM']
         self.samples = []
-        for user in self.users:
-            if 'article_ids' not in user:
+
+        # Create a dict template
+        full_data.sort_values(by='article_id', inplace=True) 
+
+        unique_ids = full_data.article_id.unique()
+        ids_dict = {}
+        for id in unique_ids:
+            ids_dict[id] = 0
+        self.num_items = len(unique_ids)
+
+         # Get all article description
+        articles = full_data[full_data.article_id.isin(unique_ids)][['article_id', 'description']]
+        articles = articles.drop_duplicates()
+        article_desc = articles.description.to_list()
+
+        # Loop through users
+        for _, user in tqdm(enumerate(self.users)):
+            if 'articles_id' not in user:
                 user['article_ids'] = []  
 
-            remain_ids = self.num_items - len(user['article_ids'])
-            comments = ['. '.join(user['comments']) for i in range(50)]
-
-            # Filter news articles not in user's history and sample
-            df = data[~data.article_id.isin(user['article_ids'])].sample(remain_ids)
-
-            # Combine user's article ids with sampled ids
-            article_ids = user['article_ids']
+            comments = ['. '.join(user['comments']) for i in range(self.num_items)]
 
             # Generate labels
-            labels = torch.zeros(50)
-            labels[:len(user['article_ids'])] = 1
-
-            article_ids.extend(df.article_id.to_list())
-
-            # Get article descriptions, handling potential missing descriptions
-            article_desc = []
-            for id in article_ids:
-                desc = data.loc[data.article_id == id, 'description']
-                # Check if description exists and is not empty
-                article_desc.append(desc.iloc[0] if not desc.empty else '') 
+            label_map = ids_dict.copy()
+            for id in user['articles_id']:
+                label_map[id] += 1
+            labels = list(label_map.values())
+            
+            # Get trigrams
+            trigrams = []
+            comments_ = data.loc[data.usr_id == user['usr_id']].user_comment.to_list()
+            for c_ in comments_:
+                sixgrams = ngrams(c_.split(), 3)
+                for grams in sixgrams:
+                    trigrams.append(' '.join(grams))
 
             self.samples.append({
-                'id': user['Id'],
-                'comments': comments,
-                'article_ids': article_ids,
+                'id': user['usr_id'],
+                'usr_comments': comments,
+                'article_ids': unique_ids,
                 'descriptions': article_desc,
-                'labels': labels
+                'labels': labels,
+                'usr_interacted_rates': torch.stack([torch.tensor(user['interacted_rate']) for i in range(self.num_items)]),
+                'usr_trigram': trigrams
             })
-
             # Tokenize article descriptions and comments within the loop, after appending to self.samples
             self.samples[-1]['descriptions'] = self.tokenizer(self.samples[-1]['descriptions'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
-            self.samples[-1]['comments'] = self.tokenizer(self.samples[-1]['comments'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
-        
+            self.samples[-1]['usr_comments'] = self.tokenizer(self.samples[-1]['usr_comments'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
+            # Check if trigrams is not empty before tokenizing
+            if self.samples[-1]['usr_trigram']:
+                self.samples[-1]['usr_trigram'] = self.tokenizer(self.samples[-1]['usr_trigram'], padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
+            else:
+                self.samples[-1]['usr_trigram'] = torch.empty(0, 150, dtype=torch.long) # Assign an empty tensor if trigrams is empty
+            trigrams = self.samples[-1]['usr_trigram']
+            self.samples[-1]['usr_trigram'] = torch.stack([trigrams for i in range(self.num_items)])
+
     def __len__(self):
         return len(self.samples)
     
