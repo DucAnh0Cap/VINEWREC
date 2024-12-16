@@ -38,7 +38,7 @@ class NeuCF(nn.Module):
             )
 
         # Output layer
-        self.affine_output = nn.Linear(in_features=self.layers[-1] + self.latent_dim_mlp, out_features=1)
+        self.affine_output = nn.Linear(in_features=self.layers[-1] + self.latent_dim_mlp, out_features=2)
         self.logic = nn.Sigmoid()
 
         # Init weight

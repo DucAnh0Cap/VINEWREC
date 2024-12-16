@@ -29,69 +29,63 @@ def compute_multiclass_metrics(gens, gts, num_classes=8):
 
 
 def get_articles(df):
-    article_ids = list(df.article_id.unique())
+    article_ids = df['article_id'].unique()  # No need to convert to list explicitly
+    
+    # Drop columns outside the loop for efficiency
+    df = df.drop(['author_url', 'author_description', 'content', 'No_Title', 
+                  'avata_coment_href', 'time_com', 'nli_score', 'nickname', 
+                  'user_reacted', 'publish_date', 'author_name'], axis=1)
+    
     article_lst = []
-    df = df.drop(['author_url', 'author_description', 'content', 'No_Title', 'avata_coment_href','time_com', 
-                  'label', 'nli_score', 'nickname', 'user_reacted'], axis=1)
     for id in article_ids:
-        article_dict = {}
-        article_dict = df.loc[df['article_id'] == id].iloc[0].to_dict()  # Create a copy of news_template
-        article_dict['usr_ids'] = df.loc[df['article_id'] == id].usr_id.to_list()
-        article_dict['comments'] = df.loc[df['article_id'] == id].user_comment.to_list()
+        article_df = df[df['article_id'] == id]
+        article_dict = article_df.iloc[0].to_dict()  
+        
+        # Using .tolist() directly for efficiency
+        article_dict['usr_ids'] = article_df['usr_id'].tolist()  
+        article_dict['comments'] = article_df['user_comment'].tolist()
+        article_dict['labels'] = article_df['label'].to_list()
+        article_dict.pop('usr_id')
+        article_dict.pop('label')
         article_lst.append(article_dict)
+
     return article_lst
 
 
 def get_users(df):
-    user_ids = list(df.usr_id.unique())
     user_lst = []
 
-    categories = df.category.unique()
-    map_dict = {'Chính trị & chính sách': 0,
-                'Văn hóa & lối sống': 0,
-                'Kinh doanh & quản trị': 0,
-                'Giáo dục & tri thức': 0,
-                'Y tế & sức khỏe': 0,
-                'Môi trường': 0,
-                'Góc nhìn': 0,
-                'Covid-19': 0}
-    # for c_ in categories:
-    #     map_dict[c_] = 0
+    # Create a mapping for categories
+    categories = df['category'].unique()
+    
+    # Filter the DataFrame to include only rows where label == 1
+    filtered_df = df[df['label'] == 1]
 
-    for id in user_ids:
-        user_dict = dict()
-        df_ = df.loc[df['usr_id'] == id]
+    # Group by 'usr_id' and aggregate
+    grouped = df.groupby('usr_id').agg(
+        comments=('user_comment', list),
+        articles_id=('article_id', list),
+        tags=('tags', list),
+        labels=('label', list),
+        categories=('category', lambda x: list(set(x))),
+    ).reset_index()
 
-        user_dict = df_.iloc[0].drop(['Title', 'article_id', 'user_comment', 'time_com', 'avata_coment_href', 'content', 'label', 'nli_score', 'tags', 'description',
-                                      'publish_date', 'No_Title', 'category', 'url', 'author_description', 'author_name', 'author_url']).to_dict()
-        user_dict['comments'] = df_.user_comment.to_list()
-        user_dict['articles_id'] = df_.article_id.to_list()
-        user_dict['categories'] = set()
-        user_dict['tags'] = df_.tags.to_list()
-        user_dict['nli_scores'] = df_.nli_score.to_list()
-
-        # Get categories
-
-        for art_id in user_dict['articles_id']:
-            art_ = df.loc[df['article_id'] == art_id]
-            if art_.shape[0] != 0:
-                user_dict['categories'].add(art_.iloc[0].category)
-        user_dict['categories'] = list(user_dict['categories'])
-
-        # Create a interacted-category list
-        temp_dict = map_dict.copy()
-        for c_ in user_dict['categories']:
-            temp_dict[c_] += 1
-        user_dict['interacted_categories'] = list(temp_dict.values()) # A list of 0 and 1 represent the interacted history
+    for _, user_data in grouped.iterrows():
+        user_dict = user_data.to_dict()
+        
+        # Get actual interacted_categories (categories that has label = 1)
+        liked_cat = filtered_df.loc[filtered_df.usr_id == user_data['usr_id']].category.to_list()
+        user_dict['interacted_categories'] = [1 if cat in liked_cat else 0 for cat in categories]
         
         # Create a interacted-category rate list
-        temp_dict = map_dict.copy()
+        temp_dict = {cat: 0 for cat in categories}
         for a_id in user_dict['articles_id']:
-            cat_ = df.loc[df.article_id == a_id].category.iloc[0]
+            cat_ = df.loc[df['article_id'] == a_id, 'category'].iloc[0]
             temp_dict[cat_] += 1
+        
+        liked_cat = filtered_df.loc[filtered_df.usr_id == user_data['usr_id']]
 
-        user_dict['categories'] = list(categories)
         user_dict['interacted_rate'] = list(temp_dict.values())
-
         user_lst.append(user_dict)
+
     return user_lst

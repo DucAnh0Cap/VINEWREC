@@ -9,7 +9,7 @@ class TrainingNeuCF(BaseTask):
     def __init__(self, config, model):
         super().__init__(config, model)
         self.config = config
-        self.loss_fn = nn.L1Loss()
+        self.loss_fn = nn.BCEWithLogitsLoss()
         self.aux_loss_fn = nn.CrossEntropyLoss()
 
     def train(self, train_dataloader):
@@ -17,7 +17,7 @@ class TrainingNeuCF(BaseTask):
         self.model.train()
 
         running_loss = 0
-        with tqdm(desc='Epoch %d - Training with L1 loss' % self.running_epoch, unit='it', total=len(train_dataloader)) as pbar:
+        with tqdm(desc='Epoch %d - Training with BCE with Logit Loss' % self.running_epoch, unit='it', total=len(train_dataloader)) as pbar:
             for it, items in enumerate(train_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
@@ -30,9 +30,9 @@ class TrainingNeuCF(BaseTask):
                 
                 if self.config['NCF']['TEXT_BASED_SCORE']:
                     aux_loss = self.aux_loss_fn(aux_output, items['usr_interacted_categories'].type(torch.float32))
-                    loss = self.loss_fn(out.flatten(), items['nli_scores']) + aux_loss * 0.01
+                    loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32)) + aux_loss * 0.01
                 else:
-                    loss = self.loss_fn(out.flatten(), items['nli_scores'])
+                    loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32))
                 loss.backward()
 
                 self.optimizer.step()
