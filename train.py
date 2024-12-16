@@ -31,7 +31,7 @@ test_loader = DataLoader(test_data,
                          collate_fn=test_data.collate_fn)
 
 model = NeuCF(config)
-task = TrainingNeuCF(config, model, train_loader, test_loader)
+task = TrainingNeuCF(config, model)
 task.start(train_loader, val_loader)
 
 output = task.evaluation(test_loader)

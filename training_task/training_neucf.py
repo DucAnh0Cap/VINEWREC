@@ -16,7 +16,7 @@ class TrainingNeuCF(BaseTask):
 
         running_loss = 0
         with tqdm(desc='Epoch %d - Training with L1 loss' % self.running_epoch, unit='it', total=len(train_dataloader)) as pbar:
-            for it, items in enumerate(self.train_dataloader):
+            for it, items in enumerate(train_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
                         items[key] = value.to(self.device)
