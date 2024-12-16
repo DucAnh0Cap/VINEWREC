@@ -109,8 +109,8 @@ class NewsDataset(Dataset):
         batch_dict['usr_trigram'] = pad_sequence(batch_dict['usr_trigram'], batch_first=True, padding_value=0)
         
         batch_dict['nli_scores'] = torch.tensor(batch_dict['nli_scores'])
-        batch_dict['usr_interacted_categories'] = torch.stack(batch_dict['usr_interacted_categories'])
-        batch_dict['usr_interacted_rates'] = torch.stack(batch_dict['usr_interacted_rates'])
+        batch_dict['usr_interacted_categories'] = torch.stack(batch_dict['usr_interacted_categories']).type(torch.long)
+        batch_dict['usr_interacted_rates'] = torch.stack(batch_dict['usr_interacted_rates']).type(torch.long)
         batch_dict['descriptions'] = self.tokenizer(batch_dict['descriptions'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
         batch_dict['usr_comments'] = self.tokenizer(batch_dict['usr_comments'], padding="max_length", max_length=150, truncation=True, return_tensors='pt').input_ids
         batch_dict['usr_tags'] = self.tokenizer(batch_dict['usr_tags'], padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids

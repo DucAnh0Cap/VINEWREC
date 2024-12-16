@@ -53,7 +53,7 @@ class NeuCF(nn.Module):
 
 
     def forward(self, item):
-        user_embedding_mlp = self.embed_user_mlp(item['usr_comments']).mean(dim=1) # Shape: (batch_size, seq_len, embedding_dim)
+        user_embedding_mlp = self.embed_user_mlp(item['usr_comments']).mean(dim=1) # Shape: (batch_size, embedding_dim)
         item_embedding_mlp = self.embed_item_mlp(item['descriptions']).mean(dim=1)
         user_embedding_gmf = self.embed_user_gmf(item['usr_comments']).mean(dim=1)
         item_embedding_gmf = self.embed_item_gmf(item['descriptions']).mean(dim=1)
