@@ -94,7 +94,7 @@ class TestSamples(Dataset):
             if trigrams:
                 trigrams_tokenized = self.tokenizer(trigrams, padding="max_length", max_length=self.trigram_dim, truncation=True, return_tensors='pt').input_ids
             else:
-                trigrams_tokenized = torch.empty(0, self.trigram_dim, dtype=torch.long)  # Empty tensor if no trigrams
+                trigrams_tokenized = torch.zeros(1, self.trigram_dim, dtype=torch.long)  # Empty tensor if no trigrams
             usr_trigrams_tokenized.append(torch.stack([trigrams_tokenized for _ in range(len(selected_ids[i]))]))
 
         return {

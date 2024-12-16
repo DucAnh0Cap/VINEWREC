@@ -62,6 +62,6 @@ class TrainingNeuCF(BaseTask):
                              k=10,
                              to_item=True,
                              name_abbreviation=True,
-                             rounding=4)
+                             rounding=10)
 
         return scores
