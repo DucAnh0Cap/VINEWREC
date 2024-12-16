@@ -8,8 +8,10 @@ from recsys_metrics import rank_report
 class TrainingNeuCF(BaseTask):
     def __init__(self, config, model):
         super().__init__(config, model)
+        self.config = config
         self.loss_fn = nn.L1Loss()
-        
+        self.aux_loss_fn = nn.CrossEntropyLoss()
+
     def train(self, train_dataloader):
         self.model.to(self.device)
         self.model.train()
@@ -21,8 +23,16 @@ class TrainingNeuCF(BaseTask):
                     if isinstance(value, torch.Tensor):
                         items[key] = value.to(self.device)
                 out = self.model(items)  # interacted_rate, trigram_ids
+                
+                if self.config['NCF']['TEXT_BASED_SCORE']:
+                    aux_output = self.model.text_based_clf(items)
                 self.optimizer.zero_grad()
-                loss = self.loss_fn(out.flatten(), items['nli_scores'])
+                
+                if self.config['NCF']['TEXT_BASED_SCORE']:
+                    aux_loss = self.aux_loss_fn(aux_output, items['usr_interacted_categories'].type(torch.float32))
+                    loss = self.loss_fn(out.flatten(), items['nli_scores']) + aux_loss * 0.01
+                else:
+                    loss = self.loss_fn(out.flatten(), items['nli_scores'])
                 loss.backward()
 
                 self.optimizer.step()
@@ -42,7 +52,7 @@ class TrainingNeuCF(BaseTask):
         gts = []
         gens = []
         self.model.eval()
-        with tqdm(desc='Epoch %d - Evaluation' % self.epoch, unit='it', total=len(val_dataloader)) as pbar:
+        with tqdm(desc='Epoch %d - Evaluation' % self.running_epoch, unit='it', total=len(val_dataloader)) as pbar:
             for it, items in enumerate(val_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
@@ -63,5 +73,6 @@ class TrainingNeuCF(BaseTask):
                              to_item=True,
                              name_abbreviation=True,
                              rounding=10)
+        print(scores)
 
         return scores
