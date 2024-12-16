@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 from utils import compute_multiclass_metrics
-from base_task import BaseTask
+from .base_task import BaseTask
 
 
 class TrainingTextScore(BaseTask):

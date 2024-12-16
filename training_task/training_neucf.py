@@ -4,17 +4,18 @@ from tqdm import tqdm
 from .base_task import BaseTask
 from recsys_metrics import rank_report
 
+
 class TrainingNeuCF(BaseTask):
-    def __init__(self, config, model, train_dataloader, dev_dataloader):
-        super().__init__(config, model, train_dataloader, dev_dataloader)
+    def __init__(self, config, model):
+        super().__init__(config, model)
         self.loss_fn = nn.L1Loss()
         
-    def train(self):
+    def train(self, train_dataloader):
         self.model.to(self.device)
         self.model.train()
 
         running_loss = 0
-        with tqdm(desc='Epoch %d - Training with cross-entropy loss' % self.running_epoch, unit='it', total=len(self.train_dataloader)) as pbar:
+        with tqdm(desc='Epoch %d - Training with L1 loss' % self.running_epoch, unit='it', total=len(train_dataloader)) as pbar:
             for it, items in enumerate(self.train_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
@@ -31,25 +32,29 @@ class TrainingNeuCF(BaseTask):
                 pbar.set_postfix(loss=running_loss / (it + 1))
                 pbar.update()
                 self.scheduler.step()
-    
+
     def lambda_lr(self, step):
         warm_up = self.warmup
         step += 1
         return (self.model.latent_dim_mlp ** -.5) * min(step ** -.5, step * warm_up ** -1.5)
-    
-    def evaluation(self):
+
+    def evaluation(self, val_dataloader):
         gts = []
         gens = []
         self.model.eval()
-        with tqdm(desc='Epoch %d - Evaluation' % self.epoch, unit='it', total=len(self.dev_dataloader)) as pbar:
-            for it, items in enumerate(self.test_dataloader):
+        with tqdm(desc='Epoch %d - Evaluation' % self.epoch, unit='it', total=len(val_dataloader)) as pbar:
+            for it, items in enumerate(val_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
-                        items[key] = value.to(self.device)
+                        items[key] = value.squeeze().to(self.device)
                 with torch.inference_mode():
                     outs = self.model(items).flatten()
-                gts.append(items['labels'])
-                gens.append(outs.flatten())
+                    outs, indices = torch.sort(outs, descending=True)
+                    gt = items['labels'][indices]
+                gts.append(gt)
+                gens.append(outs)
+
+                pbar.update()
         gts = torch.stack(gts)
         gens = torch.stack(gens)
         scores = rank_report(preds=gens, 
@@ -58,5 +63,5 @@ class TrainingNeuCF(BaseTask):
                              to_item=True, 
                              name_abbreviation=True,
                              rounding=4)
-        
+
         return scores

@@ -17,8 +17,9 @@ class NeuCF(nn.Module):
         # Use text-based score
         if self.text_based_score:
             self.text_based_clf = TrigramTextScoreModel(config)
-            for param in self.text_based_clf.parameters():
-                param.requires_grad = False
+            if config['NCF']['PRETRAIN_TEXT_BASED']:
+                for param in self.text_based_clf.parameters():
+                    param.requires_grad = False
             self.tb_fc_1 = nn.Linear(config['DATA']['NUM_CLASSES'], self.latent_dim_mlp)
             self.tb_fc_2 = nn.Linear(self.layers[0], self.layers[1])
 

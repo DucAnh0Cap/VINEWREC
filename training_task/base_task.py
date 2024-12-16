@@ -8,7 +8,7 @@ import os
 
 
 class BaseTask:
-    def __init__(self, config, model, train_dataloader, dev_dataloader):
+    def __init__(self, config, model):
         super().__init__()
         self.model = model
         self.loss_fn = nn.CrossEntropyLoss()
@@ -18,8 +18,8 @@ class BaseTask:
         
         self.epoch = config['TRAINING']['EPOCH']
         self.running_epoch = 0
-        self.train_dataloader = train_dataloader
-        self.dev_dataloader = dev_dataloader
+        # self.train_dataloader = train_dataloader
+        # self.dev_dataloader = dev_dataloader
         
         self.patience = config['TRAINING']['PATIENCE']
         self.device = config['TRAINING']['DEVICE']
@@ -28,7 +28,6 @@ class BaseTask:
         self.scheduler = LambdaLR(self.optimizer, self.lambda_lr)
         self.checkpoint_path = config['TRAINING']['CHECKPOINT_PATH']
         
-
     def train(self):
         raise NotImplementedError 
 
@@ -36,12 +35,12 @@ class BaseTask:
         raise NotImplementedError
         
     def save_checkpoint(self, dict_for_updating):
-        if not os.isdir(self.checkpoint_path):
+        if not os.path.isdir(self.checkpoint_path):
             os.mkdir(self.checkpoint_path)
         dict_for_saving = {
             'epoch': self.epoch,
             'state_dict': self.model.state_dict(),
-            'optimizer': self.optim.state_dict(),
+            'optimizer': self.optimizer.state_dict(),
             'scheduler': self.scheduler.state_dict()
         }
         for key, value in dict_for_updating.items():
@@ -53,15 +52,15 @@ class BaseTask:
         step += 1
         return (self.model.d_model ** -.5) * min(step ** -.5, step * warm_up ** -1.5)
 
-    def start(self):
+    def start(self, train_dataloader, val_dataloader):
         best_val_score = .0
         patience = 0
         
         for it in range(self.epoch):
-            self.train()
+            self.train(train_dataloader)
 
             # val scores
-            scores = self.evaluate_metrics(self.dev_dataloader)
+            scores = self.evaluation(val_dataloader)
             val_score = scores[self.score]
 
             best = False
