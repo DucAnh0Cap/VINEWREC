@@ -5,16 +5,16 @@ from .base_task import BaseTask
 
 
 class TrainingTextScore(BaseTask):
-    def __init__(self, config, model, train_dataloader, dev_dataloader):
-        super().__init__(config, model, train_dataloader, dev_dataloader)
+    def __init__(self, config, model):
+        super().__init__(config, model)
 
-    def train(self):
+    def train(self, train_dataloader):
         self.model.to(self.device)
         self.model.train()
 
         running_loss = 0
-        with tqdm(desc='Epoch %d - Training with cross-entropy loss' % self.running_epoch, unit='it', total=len(self.train_dataloader)) as pbar:
-            for it, items in enumerate(self.train_dataloader):
+        with tqdm(desc='Epoch %d - Training with cross-entropy loss' % self.running_epoch, unit='it', total=len(train_dataloader)) as pbar:
+            for it, items in enumerate(train_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
                         items[key] = value.to(self.device)
@@ -31,12 +31,12 @@ class TrainingTextScore(BaseTask):
                 pbar.update()
                 self.scheduler.step()
 
-    def evaluation(self):
+    def evaluation(self, dev_dataloader):
         gts = []
         gens = []
         self.model.eval()
-        with tqdm(desc='Epoch %d - Evaluation' % self.epoch, unit='it', total=len(self.dev_dataloader)) as pbar:
-            for it, items in enumerate(self.test_dataloader):
+        with tqdm(desc='Epoch %d - Evaluation' % self.running_epoch, unit='it', total=len(dev_dataloader)) as pbar:
+            for it, items in enumerate(dev_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
                         items[key] = value.to(self.device)
@@ -45,5 +45,6 @@ class TrainingTextScore(BaseTask):
                 gts.extend(items['interacted_categories'].cpu())
                 gens.extend(outs.cpu())
         scores = compute_multiclass_metrics(gens, gts)
+        pbar.update()
         
         return scores

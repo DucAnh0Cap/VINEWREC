@@ -57,10 +57,10 @@ class TrainingNeuCF(BaseTask):
                 pbar.update()
         gts = torch.stack(gts)
         gens = torch.stack(gens)
-        scores = rank_report(preds=gens, 
-                             target=gts, 
-                             k=10, 
-                             to_item=True, 
+        scores = rank_report(preds=gens,
+                             target=gts,
+                             k=10,
+                             to_item=True,
                              name_abbreviation=True,
                              rounding=4)
 
