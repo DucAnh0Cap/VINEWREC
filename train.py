@@ -21,7 +21,7 @@ val_data = TestSamples(config, val, df)
 test_data = TestSamples(config, test, df)
 
 train_loader = DataLoader(train_data,
-                          batch_size=8,
+                          batch_size=config['DATA']['BATCH_SIZE'],
                           collate_fn=train_data.collate_fn)
 val_loader = DataLoader(val,
                         batch_size=1,
