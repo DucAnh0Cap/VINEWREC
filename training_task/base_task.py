@@ -64,7 +64,8 @@ class BaseTask:
             # use_rl = checkpoint["use_rl"]
             best_val_score = checkpoint["best_val_score"]
             patience = checkpoint["patience"]
-            self.epoch = checkpoint["epoch"] + 1
+            self.running_epoch = checkpoint["epoch"] + 1
+            self.epoch = self.epoch - self.running_epoch
             self.optim.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler'])
 

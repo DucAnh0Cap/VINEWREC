@@ -22,9 +22,9 @@ with open(args.config_file, 'rb') as f:
     config = yaml.safe_load(f)
 
 df = pd.read_csv(args.full_data_file)
-train = pd.read_csv(args.full_data_file)
-test = pd.read_csv(args.full_data_file)
-val = pd.read_csv(args.full_data_file)
+train = pd.read_csv(args.train_file)
+test = pd.read_csv(args.test_file)
+val = pd.read_csv(args.val_file)
 
 train_data = NewsDataset(config, train)
 val_data = TestSamples(config, val, df)
