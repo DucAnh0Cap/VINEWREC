@@ -55,7 +55,10 @@ class TrainingNeuCF(BaseTask):
             for it, items in enumerate(val_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
-                        items[key] = value.squeeze().to(self.device)
+                        if key == 'usr_trigram':
+                            items[key] = value.squeeze(0).to(self.device)
+                        else:
+                            items[key] = value.squeeze().to(self.device)
                 with torch.inference_mode():
                     outs = self.model(items).flatten()
                     outs, indices = torch.sort(outs, descending=True)
