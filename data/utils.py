@@ -10,27 +10,27 @@ def general_negative_comments(df):
     category_articles = df.groupby('category')['article_id'].apply(list).to_dict()
     
     general_negative_comments = [
-            # Không phù hợp với sở thích
+            # Not one's cup of tea
             "Bài viết này không liên quan đến sở thích của tôi.",
             "Tôi không quan tâm đến chủ đề này.",
             "Chủ đề này không thực sự hấp dẫn tôi.",
             
-            # Không hiểu nội dung
+            # Not understand content
             "Tôi không hiểu ý nghĩa của bài viết này.",
             "Nội dung này có vẻ phức tạp và khó tiếp cận.",
             "Tôi thấy bài viết này không rõ ràng.",
             
-            # Không thích thể loại
+            # Not like the category
             "Tôi không thích đọc các bài viết thuộc thể loại này.",
             "Thể loại này không thu hút tôi lắm.",
             "Tôi thường tránh đọc bài về chủ đề này.",
             
-            # Không liên quan đến bản thân
+            # Not relevant
             "Bài viết này không liên quan gì đến tôi.",
             "Tôi không thấy mình có mối quan tâm gì với nội dung này.",
             "Chủ đề này không phù hợp với tình hình của tôi.",
             
-            # Quá phổ biến hoặc nhàm chán
+            # Too popular or boring
             "Những thông tin này quá nhàm chán và không có gì mới.",
             "Tôi đã đọc nhiều bài tương tự rồi.",
             "Bài viết không có điểm nào nổi bật để giữ tôi đọc."

@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
-# from utils import get_users
+from utils import get_users
 import torch
 from tqdm.auto import tqdm
 from nltk import ngrams
