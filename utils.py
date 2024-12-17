@@ -1,7 +1,6 @@
 from tqdm.auto import tqdm
 from torchmetrics import Accuracy, Recall, Precision
 from torchmetrics.classification import MulticlassF1Score
-from tqdm.auto import tqdm
 
 
 def compute_multiclass_metrics(gens, gts, num_classes=8):

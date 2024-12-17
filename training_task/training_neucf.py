@@ -9,7 +9,7 @@ class TrainingNeuCF(BaseTask):
     def __init__(self, config, model):
         super().__init__(config, model)
         self.config = config
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.BCELoss()
         self.aux_loss_fn = nn.CrossEntropyLoss()
 
     def train(self, train_dataloader):
