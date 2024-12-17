@@ -27,7 +27,7 @@ test = pd.read_csv(args.test_file)
 val = pd.read_csv(args.val_file)
 
 train_data = NewsDataset(config, train)
-val_data = NewsDataset(config, val)
+val_data = TestSamples(config, val, df)
 test_data = TestSamples(config, test, df)
 
 train_loader = DataLoader(train_data,
