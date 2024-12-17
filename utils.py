@@ -52,12 +52,17 @@ def get_articles(df):
     return article_lst
 
 
-def get_users(df):
+def get_users(df, all_data):
     user_lst = []
 
     # Create a mapping for categories
-    categories = df['category'].unique()
-    
+    # categories = df['category'].unique()
+    categories = ['Chính trị & chính sách', 'Covid-19', 
+                  'Giáo dục & tri thức', 'Góc nhìn', 
+                  'Kinh doanh & quản trị', 'Môi trường', 
+                  'Văn hóa & lối sống', 'Y tế & sức khỏe']
+
+
     # Filter the DataFrame to include only rows where label == 1
     filtered_df = df[df['label'] == 1]
 

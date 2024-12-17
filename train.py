@@ -11,8 +11,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--config_file", type=str, required=True)
 parser.add_argument("--full_data_file", type=str, required=True)
-parser.add_argument("--train_file", type=str, requires=True)
-parser.add_argument("--val_file", type=str, requires=True)
+parser.add_argument("--train_file", type=str, required=True)
+parser.add_argument("--val_file", type=str, required=True)
 parser.add_argument("--test_file", type=str, required=True)
 parser.add_argument("--save_name", type=str, required=True)
 

@@ -23,12 +23,11 @@ class TrainingNeuCF(BaseTask):
                     if isinstance(value, torch.Tensor):
                         items[key] = value.to(self.device)
                 out = self.model(items)  # interacted_rate, trigram_ids
-                
-                if self.config['NCF']['TEXT_BASED_SCORE']:
-                    aux_output = self.model.text_based_clf(items)
+                    
                 self.optimizer.zero_grad()
                 
                 if self.config['NCF']['TEXT_BASED_SCORE']:
+                    aux_output = self.model.text_based_clf(items)
                     aux_loss = self.aux_loss_fn(aux_output, items['usr_interacted_categories'].type(torch.float32))
                     loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32)) + aux_loss * 0.01
                 else:
