@@ -93,11 +93,11 @@ class TestSamples(Dataset):
                 ).input_ids
             else:
                 trigrams_tokenized = torch.zeros((1, self.trigram_dim), dtype=torch.long)
-            
+
             # Repeat trigrams for all items for this user
             trigrams_repeated = trigrams_tokenized.unsqueeze(0).repeat(len(selected_ids[i]), 1, 1)
             usr_trigrams_tokenized.append(trigrams_repeated)
-        
+
         # Stack and pad to ensure consistent dimensions
         usr_trigrams_tokenized = pad_sequence(
             usr_trigrams_tokenized, batch_first=True, padding_value=0

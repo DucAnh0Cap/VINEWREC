@@ -9,7 +9,7 @@ class TrainingNeuCF(BaseTask):
     def __init__(self, config, model):
         super().__init__(config, model)
         self.config = config
-        self.loss_fn = nn.BCELoss()
+        self.loss_fn = nn.BCEWithLogitsLoss()
         self.aux_loss_fn = nn.CrossEntropyLoss()
 
     def train(self, train_dataloader):
@@ -55,10 +55,7 @@ class TrainingNeuCF(BaseTask):
             for it, items in enumerate(val_dataloader):
                 for key, value in items.items():
                     if isinstance(value, torch.Tensor):
-                        if key == 'usr_trigram':
-                            items[key] = value.squeeze(0).to(self.device)
-                        else:
-                            items[key] = value.squeeze().to(self.device)
+                        items[key] = value.squeeze().to(self.device)
                 with torch.inference_mode():
                     outs = self.model(items).flatten()
                     outs, indices = torch.sort(outs, descending=True)

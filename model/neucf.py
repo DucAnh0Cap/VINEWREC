@@ -81,6 +81,6 @@ class NeuCF(nn.Module):
 
         vector = torch.cat([mlp_vector, gmf_vector], dim=-1)
         logits = self.affine_output(vector.flatten(1))
-        ratings = self.logic(logits)
+        # ratings = self.logic(logits)
 
-        return ratings
+        return logits
