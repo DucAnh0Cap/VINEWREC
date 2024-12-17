@@ -5,7 +5,7 @@ import torch
 from tqdm.auto import tqdm
 from nltk import ngrams
 import random
-
+from torch.nn.utils.rnn import pad_sequence
 
 class TestSamples(Dataset):
     '''
@@ -62,9 +62,9 @@ class TestSamples(Dataset):
         # Extract data from the batch
         ids = [item['id'] for item in batch]
         selected_ids = [item['selected_ids'] for item in batch]
-        labels = [item['labels'] for item in batch]
+        labels = [torch.tensor(item['labels'], dtype=torch.float) for item in batch]
         comments = [item['comments'] for item in batch]
-        usr_interacted_rates = [torch.tensor(item['usr_interacted_rates']) for item in batch]
+        usr_interacted_rates = [torch.tensor(item['usr_interacted_rates'], dtype=torch.float) for item in batch]
         usr_trigrams = [item['usr_trigram'] for item in batch]
 
         # Tokenize and pad article descriptions
@@ -83,24 +83,32 @@ class TestSamples(Dataset):
             padding="max_length", max_length=150, truncation=True, return_tensors='pt'
         ).input_ids.view(len(batch), -1, 150)  # Reshape as above
 
-        # Process trigrams
+        # Process user trigrams and repeat for self.num_items
         usr_trigrams_tokenized = []
-        for trigrams in usr_trigrams:
+        for i, trigrams in enumerate(usr_trigrams):
             if trigrams:
                 trigrams_tokenized = self.tokenizer(
                     trigrams, padding="max_length", max_length=self.trigram_dim,
                     truncation=True, return_tensors='pt'
                 ).input_ids
-                usr_trigrams_tokenized.append(trigrams_tokenized.unsqueeze(0).repeat(len(selected_ids), 1, 1))
             else:
-                usr_trigrams_tokenized.append(torch.zeros(len(selected_ids), self.trigram_dim, dtype=torch.long))
+                trigrams_tokenized = torch.zeros((1, self.trigram_dim), dtype=torch.long)
+            
+            # Repeat trigrams for all items for this user
+            trigrams_repeated = trigrams_tokenized.unsqueeze(0).repeat(len(selected_ids[i]), 1, 1)
+            usr_trigrams_tokenized.append(trigrams_repeated)
+        
+        # Stack and pad to ensure consistent dimensions
+        usr_trigrams_tokenized = pad_sequence(
+            usr_trigrams_tokenized, batch_first=True, padding_value=0
+        )  # Shape: [batch_size, num_items, trigram_dim]
 
         return {
             'id': ids,
             'article_ids': selected_ids,
             'usr_comments': comments_tokenized,
             'descriptions': article_desc_tokenized,
-            'labels': torch.tensor(labels, dtype=torch.float),
-            'usr_interacted_rates': torch.stack(usr_interacted_rates),
-            'usr_trigram': torch.stack(usr_trigrams_tokenized)
+            'labels': pad_sequence(labels, batch_first=True, padding_value=0),
+            'usr_interacted_rates': pad_sequence(usr_interacted_rates, batch_first=True, padding_value=0),
+            'usr_trigram': usr_trigrams_tokenized
         }
