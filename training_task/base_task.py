@@ -66,7 +66,7 @@ class BaseTask:
             patience = checkpoint["patience"]
             self.running_epoch = checkpoint["epoch"] + 1
             self.epoch = self.epoch - self.running_epoch
-            self.optim.load_state_dict(checkpoint['optimizer'])
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler'])
 
         else:
