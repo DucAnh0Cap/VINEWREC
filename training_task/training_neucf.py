@@ -29,7 +29,7 @@ class TrainingNeuCF(BaseTask):
                 if self.config['NCF']['TEXT_BASED_SCORE']:
                     aux_output = self.model.text_based_clf(items)
                     aux_loss = self.aux_loss_fn(aux_output, items['usr_interacted_categories'].type(torch.float32))
-                    loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32)) + aux_loss * 0.01
+                    loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32)) + aux_loss * 0.001
                 else:
                     loss = self.loss_fn(out.flatten(), items['labels'].type(torch.float32))
                 loss.backward()
