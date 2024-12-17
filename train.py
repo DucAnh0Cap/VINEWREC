@@ -6,15 +6,25 @@ from model.neucf import NeuCF
 from torch.utils.data import DataLoader
 from training_task.training_neucf import TrainingNeuCF
 import json
+import argparse
 
-with open('/content/DS300/config/config.yaml', 'rb') as f:
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_file", type=str, required=True)
+parser.add_argument("--full_data_file", type=str, required=True)
+parser.add_argument("--train_file", type=str, requires=True)
+parser.add_argument("--val_file", type=str, requires=True)
+parser.add_argument("--test_file", type=str, required=True)
+parser.add_argument("--save_name", type=str, required=True)
+
+args = parser.parse_args()
+
+with open(args.config_file, 'rb') as f:
     config = yaml.safe_load(f)
 
-df = pd.read_csv('/content/all_data.csv')
-
-train = pd.read_csv('data/train.csv')
-test = pd.read_csv('data/test.csv')
-val = pd.read_csv('data/val.csv')
+df = pd.read_csv(args.full_data_file)
+train = pd.read_csv(args.full_data_file)
+test = pd.read_csv(args.full_data_file)
+val = pd.read_csv(args.full_data_file)
 
 train_data = NewsDataset(config, train)
 val_data = TestSamples(config, val, df)
@@ -35,5 +45,5 @@ task = TrainingNeuCF(config, model)
 task.start(train_loader, val_loader)
 
 output = task.evaluation(test_loader)
-with open('neucf_evaluation.json', 'w') as f:
+with open(args.save_name, 'w') as f:
     json.dump(output, f)

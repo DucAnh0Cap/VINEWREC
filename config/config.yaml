@@ -6,6 +6,10 @@ TRAINING:
     WARMUP: 10000
     PATIENCE: 5
     CHECKPOINT_PATH: saved_models
+    CSV_PATH:
+        TRAIN: train.csv
+        TEST: test.csv
+        VAL: dev.csv
 DATA:
     BATCH_SIZE: 16
     TRIGRAM_DIM: 100
