@@ -52,7 +52,7 @@ def get_articles(df):
     return article_lst
 
 
-def get_users(df, all_data):
+def get_users(df):
     user_lst = []
 
     # Create a mapping for categories
