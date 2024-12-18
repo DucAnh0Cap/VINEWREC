@@ -25,7 +25,8 @@ class NewsDataset(Dataset):
                     'usr_ids': news_['usr_ids'][i],
                     'category': news_['category'],
                     'comment': news_['comments'][i],
-                    'label': news_['labels'][i]
+                    'label': news_['labels'][i],
+                    'tags': news_['tags']  # Extracting article tags
                 })
 
     def __len__(self):
@@ -41,7 +42,8 @@ class NewsDataset(Dataset):
             "usr_ids": [item["usr_ids"] for item in batch],
             "usr_categories": [item["category"] for item in batch],
             "usr_comments": [item["comment"] for item in batch],
-            "labels": [item["label"] for item in batch]
+            "labels": [item["label"] for item in batch],
+            "tags": [item["tags"] for item in batch]  # Adding article tags
         }
 
         # Get users with corresponding IDs
@@ -51,19 +53,15 @@ class NewsDataset(Dataset):
         # Map user data for efficient access
         user_interacted_rates = {usr['usr_id']: (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
                                                  torch.tensor(usr['interacted_categories'], dtype=torch.int64),
-                                                  ' '.join(usr['tags']))
+                                                 ' '.join(usr['tags']))
                                  for usr in users}
 
         # Prepare NLI scores and user related data
-        # labels = []
         interacted_rates = []
         interacted_categories = []
         usr_tags = []
 
         for article_id, usr_id in zip(batch_dict['article_ids'], batch_dict['usr_ids']):
-            # label = df.loc[(df.article_id == article_id) & (df.usr_id == usr_id), 'label']
-            # labels.append(label.iloc[0] if not label.empty else 0)  # Handle case if score is empty
-
             if usr_id in user_interacted_rates:
                 rate, categories, usr_tag = user_interacted_rates[usr_id]
                 interacted_rates.append(rate)
@@ -104,4 +102,6 @@ class NewsDataset(Dataset):
                                                     truncation=True, return_tensors='pt').input_ids
         batch_dict['usr_tags'] = self.tokenizer(usr_tags, padding="max_length", max_length=self.trigram_dim,
                                                 truncation=True, return_tensors='pt').input_ids
+        batch_dict['article_tags'] = self.tokenizer(batch_dict['tags'], padding="max_length", max_length=150,
+                                                    truncation=True, return_tensors='pt').input_ids  # Tokenizing article tags
         return batch_dict

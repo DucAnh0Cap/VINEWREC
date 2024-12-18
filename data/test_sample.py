@@ -22,6 +22,7 @@ class TestSamples(Dataset):
         # Prepare article descriptions and IDs
         full_data.sort_values(by='article_id', inplace=True)
         self.article_desc = dict(zip(full_data.article_id, full_data.description))
+        self.article_tags = dict(zip(full_data.article_id, full_data.tags))  # Mapping of article_id to tags
 
         # Precompute user samples without tokenization or tensor conversions
         for user in tqdm(self.users):
@@ -38,18 +39,31 @@ class TestSamples(Dataset):
             # Generate labels (1 for interacted, 0 for non-interacted)
             labels = [1 if article_id in interacted_ids else 0 for article_id in selected_ids]
 
+            # Generate comments: actual comments for interacted articles, "Haven't read" for non-interacted
+            comments = []
+            for article_id in selected_ids:
+                if article_id in interacted_ids:
+                    user_comment = self.data.loc[self.data.usr_id == user['usr_id'], 'user_comment']
+                    comments.append(user_comment.values[0])  # Get the first comment
+                else:
+                    comments.append("Haven't read")
+
             # Generate trigrams from user comments
             user_comments = data.loc[data.usr_id == user['usr_id'], 'user_comment'].tolist()
             trigrams = [' '.join(grams) for comment in user_comments for grams in ngrams(comment.split(), 3)]
+
+            # Retrieve article tags for selected articles
+            article_tags = [self.article_tags.get(article_id, '') for article_id in selected_ids]
 
             # Append sample data
             self.samples.append({
                 'id': user['usr_id'],
                 'selected_ids': selected_ids,
-                'comments': ['. '.join(user.get('comments', []))] * len(selected_ids),
+                'comments': comments,  # Updated comments list
                 'labels': labels,
                 'usr_trigram': trigrams,
-                'user_tags': [', '.join(user.get('tags', []))] * self.num_items # Add user tags
+                'user_tags': [', '.join(user.get('tags', []))] * self.num_items,  # Add user tags
+                'article_tags': article_tags  # Add article tags
             })
 
     def __len__(self):
@@ -66,6 +80,7 @@ class TestSamples(Dataset):
         comments = [item['comments'] for item in batch]
         usr_trigrams = [item['usr_trigram'] for item in batch]
         user_tags = [item['user_tags'] for item in batch]  # Get user tags
+        article_tags = [item['article_tags'] for item in batch]  # Get article tags
 
         # Tokenize and pad article descriptions
         article_descs = [
@@ -109,6 +124,12 @@ class TestSamples(Dataset):
             padding="max_length", max_length=150, truncation=True, return_tensors='pt'
         ).input_ids.view(len(batch), -1, 150)  
 
+        # Tokenize article tags
+        article_tags_tokenized = self.tokenizer(
+            [tag for sublist in article_tags for tag in sublist],
+            padding="max_length", max_length=150, truncation=True, return_tensors='pt'
+        ).input_ids.view(len(batch), -1, 150)
+
         return {
             'id': ids,
             'article_ids': selected_ids,
@@ -116,5 +137,6 @@ class TestSamples(Dataset):
             'descriptions': article_desc_tokenized,
             'labels': pad_sequence(labels, batch_first=True, padding_value=0),
             'usr_trigram': usr_trigrams_tokenized,
-            'usr_tags': user_tags_tokenized  # Return user tags
+            'usr_tags': user_tags_tokenized,  # Return user tags
+            'article_tags': article_tags_tokenized  # Return article tags
         }
