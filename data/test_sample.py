@@ -22,6 +22,7 @@ class TestSamples(Dataset):
         # Prepare article descriptions and IDs
         full_data.sort_values(by='article_id', inplace=True)
         self.article_desc = dict(zip(full_data.article_id, full_data.description))
+        self.article_tags = dict(zip(full_data.article_id, full_data.tags))  # Assuming tags are in full_data
 
         # Precompute user samples without tokenization or tensor conversions
         for user in tqdm(self.users):
@@ -42,6 +43,9 @@ class TestSamples(Dataset):
             user_comments = data.loc[data.usr_id == user['usr_id'], 'user_comment'].tolist()
             trigrams = [' '.join(grams) for comment in user_comments for grams in ngrams(comment.split(), 3)]
 
+            # Get article tags for selected article IDs
+            article_tags = [self.article_tags.get(article_id, []) for article_id in selected_ids]
+
             # Append sample data
             self.samples.append({
                 'id': user['usr_id'],
@@ -49,7 +53,7 @@ class TestSamples(Dataset):
                 'comments': ['. '.join(user.get('comments', []))] * len(selected_ids),
                 'labels': labels,
                 'usr_trigram': trigrams,
-                'user_tags': [', '.join(user.get('tags', []))] * self.num_items # Add user tags
+                'article_tags': article_tags  # Add article tags
             })
 
     def __len__(self):
@@ -65,7 +69,7 @@ class TestSamples(Dataset):
         labels = [torch.tensor(item['labels'], dtype=torch.float) for item in batch]
         comments = [item['comments'] for item in batch]
         usr_trigrams = [item['usr_trigram'] for item in batch]
-        user_tags = [item['user_tags'] for item in batch]  # Get user tags
+        article_tags = [item['article_tags'] for item in batch]  # Get article tags
 
         # Tokenize and pad article descriptions
         article_descs = [
@@ -103,11 +107,12 @@ class TestSamples(Dataset):
             usr_trigrams_tokenized, batch_first=True, padding_value=0
         )  # Shape: [batch_size, num_items, trigram_dim]
 
-        # Tokenize user tags
-        user_tags_tokenized = self.tokenizer(
-            [tag for sublist in user_tags for tag in sublist],
-            padding="max_length", max_length=150, truncation=True, return_tensors='pt'
-        ).input_ids.view(len(batch), -1, 150)  
+        # Tokenize article tags
+        article_tags_flat = [tag for sublist in article_tags for tag in sublist]
+        article_tags_tokenized = self.tokenizer(
+            article_tags_flat,
+            padding="max_length", max_length=10, truncation=True, return_tensors='pt'
+        ).input_ids.view(len(batch), -1, 10)  # Reshape to [batch_size, num_items, max_length]
 
         return {
             'id': ids,
@@ -116,5 +121,5 @@ class TestSamples(Dataset):
             'descriptions': article_desc_tokenized,
             'labels': pad_sequence(labels, batch_first=True, padding_value=0),
             'usr_trigram': usr_trigrams_tokenized,
-            'usr_tags': user_tags_tokenized  # Return user tags
+            'article_tags': article_tags_tokenized  # Return article tags
         }

@@ -24,7 +24,8 @@ class NewsDataset(Dataset):
                     'usr_ids': news_['usr_ids'][i],
                     'category': news_['category'],
                     'comment': news_['comments'][i],
-                    'label': news_['labels'][i]
+                    'label': news_['labels'][i],
+                    'article_tags': news_['tags']  # Add article tags
                 })
 
     def __len__(self):
@@ -40,7 +41,8 @@ class NewsDataset(Dataset):
             "usr_ids": [item["usr_ids"] for item in batch],
             "usr_categories": [item["category"] for item in batch],
             "usr_comments": [item["comment"] for item in batch],
-            "labels": [item["label"] for item in batch]
+            "labels": [item["label"] for item in batch],
+            "article_tags": [item["article_tags"] for item in batch]  # Get article tags
         }
 
         # Get users with corresponding IDs
@@ -49,25 +51,21 @@ class NewsDataset(Dataset):
 
         # Map user data for efficient access
         user_interacted_rates = {usr['usr_id']: (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
-                                                 torch.tensor(usr['interacted_categories'], dtype=torch.int64),
-                                                  ' '.join(usr['tags']))
+                                                 torch.tensor(usr['interacted_categories'], dtype=torch.int64))
                                  for usr in users}
 
         # Prepare NLI scores and user related data
         interacted_rates = []
         interacted_categories = []
-        usr_tags = []
 
         for article_id, usr_id in zip(batch_dict['article_ids'], batch_dict['usr_ids']):
             if usr_id in user_interacted_rates:
-                rate, categories, usr_tag = user_interacted_rates[usr_id]
+                rate, categories = user_interacted_rates[usr_id]
                 interacted_rates.append(rate)
                 interacted_categories.append(categories)
-                usr_tags.append(usr_tag)
             else:
                 interacted_rates.append(torch.zeros(len(batch_dict['usr_categories'][0]), dtype=torch.float32))
                 interacted_categories.append(torch.zeros(len(batch_dict['usr_categories'][0]), dtype=torch.int64))
-                usr_tags.append('')
 
         # Append user IDs to comments
         batch_dict['usr_comments'] = [
@@ -104,6 +102,12 @@ class NewsDataset(Dataset):
         batch_dict['usr_interacted_rates'] = torch.stack(interacted_rates).float()
         batch_dict['descriptions'] = self.tokenizer(batch_dict['descriptions'], padding="max_length", max_length=150,
                                                     truncation=True, return_tensors='pt').input_ids
-        batch_dict['usr_tags'] = self.tokenizer(usr_tags, padding="max_length", max_length=self.trigram_dim,
-                                                truncation=True, return_tensors='pt').input_ids
+
+        # Tokenize article tags
+        article_tags_flat = [tag for sublist in batch_dict['article_tags'] for tag in sublist]
+        batch_dict['article_tags'] = self.tokenizer(
+            article_tags_flat,
+            padding="max_length", max_length=10, truncation=True, return_tensors='pt'
+        ).input_ids.view(len(batch), -1, 10)  # Reshape to [batch_size, num_items, max_length]
+
         return batch_dict
