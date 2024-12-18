@@ -48,8 +48,8 @@ class TestSamples(Dataset):
                 'selected_ids': selected_ids,
                 'comments': ['. '.join(user.get('comments', []))] * len(selected_ids),
                 'labels': labels,
-                'usr_interacted_rates': [user.get('interacted_rate')] * len(selected_ids),
-                'usr_trigram': trigrams
+                'usr_trigram': trigrams,
+                'user_tags': [', '.join(user.get('tags', []))] * self.num_items # Add user tags
             })
 
     def __len__(self):
@@ -64,8 +64,8 @@ class TestSamples(Dataset):
         selected_ids = [item['selected_ids'] for item in batch]
         labels = [torch.tensor(item['labels'], dtype=torch.float) for item in batch]
         comments = [item['comments'] for item in batch]
-        usr_interacted_rates = [torch.tensor(item['usr_interacted_rates'], dtype=torch.float) for item in batch]
         usr_trigrams = [item['usr_trigram'] for item in batch]
+        user_tags = [item['user_tags'] for item in batch]  # Get user tags
 
         # Tokenize and pad article descriptions
         article_descs = [
@@ -83,7 +83,7 @@ class TestSamples(Dataset):
             padding="max_length", max_length=150, truncation=True, return_tensors='pt'
         ).input_ids.view(len(batch), -1, 150)  # Reshape as above
 
-        # Process user trigrams and repeat for self.num_items
+        # Process user trigrams
         usr_trigrams_tokenized = []
         for i, trigrams in enumerate(usr_trigrams):
             if trigrams:
@@ -103,12 +103,18 @@ class TestSamples(Dataset):
             usr_trigrams_tokenized, batch_first=True, padding_value=0
         )  # Shape: [batch_size, num_items, trigram_dim]
 
+        # Tokenize user tags
+        user_tags_tokenized = self.tokenizer(
+            [tag for sublist in user_tags for tag in sublist],
+            padding="max_length", max_length=150, truncation=True, return_tensors='pt'
+        ).input_ids.view(len(batch), -1, 150)  
+
         return {
             'id': ids,
             'article_ids': selected_ids,
             'usr_comments': comments_tokenized,
             'descriptions': article_desc_tokenized,
             'labels': pad_sequence(labels, batch_first=True, padding_value=0),
-            'usr_interacted_rates': pad_sequence(usr_interacted_rates, batch_first=True, padding_value=0),
-            'usr_trigram': usr_trigrams_tokenized
+            'usr_trigram': usr_trigrams_tokenized,
+            'usr_tags': user_tags_tokenized  # Return user tags
         }
