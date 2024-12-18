@@ -50,7 +50,7 @@ class NewsDataset(Dataset):
 
         # Map user data for efficient access
         user_interacted_rates = {usr['usr_id']: (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
-                                                  torch.tensor(usr['interacted_categories'], dtype=torch.int64),
+                                                 torch.tensor(usr['interacted_categories'], dtype=torch.int64),
                                                   ' '.join(usr['tags']))
                                  for usr in users}
 
