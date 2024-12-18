@@ -7,6 +7,7 @@ from torch.nn.utils.rnn import pad_sequence
 from nltk import ngrams
 import torch
 
+
 class NewsDataset(Dataset):
     def __init__(self, config, df: pd.DataFrame):
         self.data = df
@@ -49,16 +50,20 @@ class NewsDataset(Dataset):
 
         # Map user data for efficient access
         user_interacted_rates = {usr['usr_id']: (torch.tensor(usr['interacted_rate'], dtype=torch.float32),
-                                                 torch.tensor(usr['interacted_categories'], dtype=torch.int64),
+                                                  torch.tensor(usr['interacted_categories'], dtype=torch.int64),
                                                   ' '.join(usr['tags']))
                                  for usr in users}
 
         # Prepare NLI scores and user related data
+        # labels = []
         interacted_rates = []
         interacted_categories = []
         usr_tags = []
 
         for article_id, usr_id in zip(batch_dict['article_ids'], batch_dict['usr_ids']):
+            # label = df.loc[(df.article_id == article_id) & (df.usr_id == usr_id), 'label']
+            # labels.append(label.iloc[0] if not label.empty else 0)  # Handle case if score is empty
+
             if usr_id in user_interacted_rates:
                 rate, categories, usr_tag = user_interacted_rates[usr_id]
                 interacted_rates.append(rate)
@@ -68,11 +73,6 @@ class NewsDataset(Dataset):
                 interacted_rates.append(torch.zeros(len(batch_dict['usr_categories'][0]), dtype=torch.float32))
                 interacted_categories.append(torch.zeros(len(batch_dict['usr_categories'][0]), dtype=torch.int64))
                 usr_tags.append('')
-
-        # Append user IDs to comments
-        batch_dict['usr_comments'] = [
-            f"{usr_id}: {comment}" for usr_id, comment in zip(batch_dict['usr_ids'], batch_dict['usr_comments'])
-        ]
 
         # Get trigrams for user comments
         usr_hist_lst = [df.loc[df.usr_id == id, 'user_comment'].tolist() for id in batch_dict['usr_ids']]
@@ -94,15 +94,13 @@ class NewsDataset(Dataset):
 
         batch_dict['usr_trigram'] = pad_sequence(tokenized_trigrams, batch_first=True, padding_value=0)
 
-        # Tokenize modified user comments (including user IDs)
-        batch_dict['usr_comments'] = self.tokenizer(batch_dict['usr_comments'], padding="max_length", max_length=150,
-                                                    truncation=True, return_tensors='pt').input_ids
-
         # Fill batch_dict
         batch_dict['labels'] = torch.tensor(batch_dict['labels'])
         batch_dict['usr_interacted_categories'] = torch.stack(interacted_categories).long()
         batch_dict['usr_interacted_rates'] = torch.stack(interacted_rates).float()
         batch_dict['descriptions'] = self.tokenizer(batch_dict['descriptions'], padding="max_length", max_length=150,
+                                                    truncation=True, return_tensors='pt').input_ids
+        batch_dict['usr_comments'] = self.tokenizer(batch_dict['usr_comments'], padding="max_length", max_length=150,
                                                     truncation=True, return_tensors='pt').input_ids
         batch_dict['usr_tags'] = self.tokenizer(usr_tags, padding="max_length", max_length=self.trigram_dim,
                                                 truncation=True, return_tensors='pt').input_ids

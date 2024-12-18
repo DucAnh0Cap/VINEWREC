@@ -20,7 +20,7 @@ class TrigramTextScoreModel(nn.Module):
     def forward(self, items):
         # trigram and interacted_rate embeddings
         trigram_embeds = self.trigram_embedding(items['usr_trigram']) # Shape: (batch_size, seq_len, embedding_dim)
-        interacted_rate_embeds = self.interacted_rate_embedding(items['usr_tags'].type(torch.long))  # Shape: (batch_size, seq_len, embedding_dim)
+        interacted_rate_embeds = self.interacted_rate_embedding(items['usr_interacted_rates'].type(torch.long))  # Shape: (batch_size, seq_len, embedding_dim)
         interacted_rate_features = interacted_rate_embeds.mean(dim=1)  # Aggregate features, Shape: (batch_size, embedding_dim)
         
         if trigram_embeds.dim() < 4:
