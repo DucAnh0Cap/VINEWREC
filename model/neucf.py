@@ -25,6 +25,7 @@ class NeuCF(nn.Module):
 
 
         # Embed item and user features
+        # self.embed_usr_interacted_rate = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_mlp)
         self.embed_user_mlp = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_mlp)
         self.embed_item_mlp = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_mlp)
         self.embed_user_gmf = nn.Embedding(num_embeddings=config['DATA']['VOCAB_SIZE'], embedding_dim=self.latent_dim_gmf)

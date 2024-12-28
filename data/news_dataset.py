@@ -7,7 +7,6 @@ from torch.nn.utils.rnn import pad_sequence
 from nltk import ngrams
 import torch
 
-
 class NewsDataset(Dataset):
     def __init__(self, config, df: pd.DataFrame):
         self.data = df
@@ -41,7 +40,7 @@ class NewsDataset(Dataset):
             "descriptions": [item["description"] for item in batch],
             "usr_ids": [item["usr_ids"] for item in batch],
             "usr_categories": [item["category"] for item in batch],
-            "usr_comments": [item["comment"] for item in batch],
+            "usr_comments": [f"{item['usr_ids']} : {item['comment']}" for item in batch],  # Add usr_id at the start of comment
             "labels": [item["label"] for item in batch],
             "tags": [item["tags"] for item in batch]  # Adding article tags
         }

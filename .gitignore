@@ -1,2 +1,4 @@
 # Ignore large CSV files
 *.csv
+test.py
+data

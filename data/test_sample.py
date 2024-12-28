@@ -13,10 +13,10 @@ class TestSamples(Dataset):
     '''
     def __init__(self, config, data, full_data):
         self.data = data
-        self.users = get_users(data)
+        self.users = [user for user in get_users(data) if len(user.get('articles_id', [])) >= 4]  # Filter users with 4 interactions or more
         self.tokenizer = AutoTokenizer.from_pretrained("VietAI/vit5-base")
         self.trigram_dim = config['DATA']['TRIGRAM_DIM']
-        self.num_items = config['DATA']['NUM_ITEMS']  # Customizable number of articles
+        self.num_items = config['DATA']['NUM_ITEMS']  # number of articles
         self.samples = []
 
         # Prepare article descriptions and IDs
@@ -39,14 +39,14 @@ class TestSamples(Dataset):
             # Generate labels (1 for interacted, 0 for non-interacted)
             labels = [1 if article_id in interacted_ids else 0 for article_id in selected_ids]
 
-            # Generate comments: actual comments for interacted articles, "Haven't read" for non-interacted
+            # Generate comments: actual comments for interacted articles, "Chưa đọc" for non-interacted
             comments = []
             for article_id in selected_ids:
                 if article_id in interacted_ids:
-                    user_comment = self.data.loc[self.data.usr_id == user['usr_id'], 'user_comment']
-                    comments.append(user_comment.values[0])  # Get the first comment
+                    user_comment = self.data.loc[(self.data.usr_id == user['usr_id']) & (self.data.article_id == article_id), 'user_comment'].values[0]
+                    comments.append(str(user['usr_id']) + ": " + user_comment)  # Add usr_id to the comment
                 else:
-                    comments.append("Haven't read")
+                    comments.append(str(user['usr_id']) + ": " + "Chưa đọc")
 
             # Generate trigrams from user comments
             user_comments = data.loc[data.usr_id == user['usr_id'], 'user_comment'].tolist()
