@@ -5,7 +5,7 @@ The ViNewRec News Dataset was created to support research in news recommendation
 To set up the project, please follow these steps:
 ```bash
 git clone https://github.com/DucAnh0Cap/VINEWREC
-cd VINEWREC_Dataset
+cd VINEWREC
 pip install -r requirements.txt
 ```
 
