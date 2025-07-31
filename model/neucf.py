@@ -3,7 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 from model.text_score import TrigramTextScoreModel
 
-
 class NeuCF(nn.Module):
     def __init__(self, config):
         super(NeuCF, self).__init__()

@@ -30,7 +30,12 @@ class TrainingTextScore(BaseTask):
                 pbar.set_postfix(loss=running_loss / (it + 1))
                 pbar.update()
                 self.scheduler.step()
-
+                
+    def lambda_lr(self, step):
+        warm_up = self.warmup
+        step += 1
+        return (self.model.latent_dim_mlp ** -.5) * min(step ** -.5, step * warm_up ** -1.5)
+    
     def evaluation(self, dev_dataloader):
         gts = []
         gens = []
