@@ -1,0 +1,37 @@
+TASK: TRAIN_NEUCF
+
+TRAINING:
+    LEARNING_RATE: 1.
+    EPOCH: 200
+    DEVICE: cuda
+    SCORE: ndcg
+    WARMUP: 10000
+    PATIENCE: 5
+    CHECKPOINT_PATH: saved_models
+    CSV_PATH:
+        TRAIN: train.csv
+        TEST: test.csv
+        VAL: dev.csv
+DATA:
+    BATCH_SIZE: 16
+    TRIGRAM_DIM: 100
+    NUM_CLASSES: 8
+    NUM_USERS: 11954
+    NUM_ITEMS: 100
+    VOCAB_SIZE: 36096
+NCF:
+    LATENT_DIM_GMF: 128
+    LATENT_DIM_MLP: 128
+    LAYERS:
+    - 256
+    - 128
+    - 64
+    - 32
+    - 16
+    WEIGHT_INIT_GAUSSIAN: True
+    TEXT_BASED_SCORE: True
+    PRETRAIN_TEXT_BASED: False
+TEXT_BASED:
+    WEIGHT_INIT_GAUSSIAN: True
+    EMBEDDING_DIM: 128
+    HIDDEN_DIM: 128
