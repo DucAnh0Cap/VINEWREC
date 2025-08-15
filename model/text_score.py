@@ -24,7 +24,7 @@ class TrigramTextScoreModel(nn.Module):
         interacted_rate_features = interacted_rate_embeds.mean(dim=1)  # Aggregate features, Shape: (batch_size, embedding_dim)
         
         if trigram_embeds.dim() < 4:
-            # If so, add a dimension of size 1 to represent a missing dimension
+            # add a dimension of size 1 if a missing dimension
             trigram_embeds = trigram_embeds.unsqueeze(1)
             
         batch_size, seq_len, _, _ = trigram_embeds.shape
